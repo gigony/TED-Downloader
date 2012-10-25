@@ -1,0 +1,10 @@
+<STYLE TYPE="text/css">
+<!--
+P { margin-left:2pt; margin-right:2pt; margin-bottom:1pt;
+    margin-top:1pt; font-size:20pt; text-align:center;
+    font-family:Arial, Sans-serif; font-weight:bold; color:white;
+    }
+.%(className)s {Name: %(transLang)s; lang: %(iso639ID)s-%(iso3166ID)s; SAMI_TYPE: CC;}
+.ENCC {Name: English; lang: en-US; SAMI_TYPE: CC;}
+-->
+</STYLE>
