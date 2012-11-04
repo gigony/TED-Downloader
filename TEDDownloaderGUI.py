@@ -329,18 +329,31 @@ class GUIApp:
     def find_btn(self):
         pattern=self.edit.get().lower()
         
+        selectedSet=set()
+        curSel=self.listbox.curselection()
+        for i in curSel:
+            selectedSet.add(self.indexList[int(i)])
+        
         if pattern=='':
-            self.indexList=range(len(self.titleList))
-            self.update_video_list()
+            idxList=list(set(range(len(self.titleList)))-selectedSet)            
         else:
             self.fileList=getTEDFileList()
-            self.indexList=[]
-            count=0
+            idxList=set()
+            count=0            
             for title in self.titleList:
                 if title.lower().find(pattern)>=0:
-                    self.indexList+=[count]
+                    idxList.add(count)
                 count+=1
-            self.update_video_list()        
+            idxList=list(idxList-selectedSet)
+        idxList.sort()
+        selectedList=list(selectedSet)
+        selectedList.sort()
+        idxList=selectedList+idxList
+        self.indexList=idxList
+        self.update_video_list(selectedSet)
+        self.edit.delete(0,END) 
+        self.listbox.see(len(selectedList)-1)         
+        self.listbox.focus_set()
     def on_enterkey(self,key):
         self.find_btn()           
 
@@ -357,7 +370,7 @@ class GUIApp:
                     titleList+=[item[0].decode(encoding)]
                     resultList+=[item[1].decode(encoding)]                   
                     
-            addFile.close()            
+            addFile.close()    
             self.tedAddressList,self.titleList=(resultList,titleList)
             self.indexList=range(len(titleList))
             self.update_video_list()
@@ -387,7 +400,7 @@ class GUIApp:
         self.queue = Queue.Queue()
         self.check_me()
         thread.start_new_thread(self.get_video_list,())
-    def update_video_list(self):
+    def update_video_list(self,selSet=set()):
         self.fileList=getTEDFileList()
         size=self.listbox.size()
         self.listbox.delete(0,size-1)
@@ -396,6 +409,8 @@ class GUIApp:
             self.listbox.insert(END,self.titleList[item])            
             if isExistTEDFile(self.tedAddressList[item],self.fileList):                
                 self.listbox.itemconfig(count,bg='white',fg='gray')
+            if item in selSet:
+                self.listbox.select_set(count)
             count=count+1
         print count,"^^"
         print 'Done!'
@@ -618,7 +633,7 @@ def download(tedList,videoQuality):
                     txtFile.close ()                                
                 break
             except Exception,msg:        
-                log_print(logFile,msg)
+                log_print(logFile,str(msg))
                 log_print(logFile,'waiting 10 seconds..')
                 isStopped=True
                 tryCount=tryCount-1
@@ -627,7 +642,8 @@ def download(tedList,videoQuality):
 def log_print(logFile,msg):
     print msg
     f=open ( './VIDEO/'+'log.txt' , 'a' )
-    f.write(msg.encode(encoding,'xmlcharrefreplace') + os.linesep)
+    f.write(msg + os.linesep)
+    f.close()
 
 
 tedList=[]

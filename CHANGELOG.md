@@ -1,11 +1,15 @@
 CHANGE LOG
 ==========
 
-Current release 2.3
+Current release 2.3.1
+
+2.3.1
+---
+*	Fixed some bugs.
+*	Finding and selecting mechanism is improved.
 
 2.3
 ---
-
 *	Load the video list from the file('titleList-address.txt').
 *   Added a refreshing video list feature.
 *   Added a find button
@@ -13,6 +17,5 @@ Current release 2.3
 
 2.2
 ---
-
 *	Source code is moved to GitHub.
 *	Code is cleaned up.
