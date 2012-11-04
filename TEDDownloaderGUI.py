@@ -327,7 +327,7 @@ class GUIApp:
         
         self.load_video_list()
     def find_btn(self):
-        pattern=self.edit.get()
+        pattern=self.edit.get().lower()
         
         if pattern=='':
             self.indexList=range(len(self.titleList))
@@ -337,7 +337,7 @@ class GUIApp:
             self.indexList=[]
             count=0
             for title in self.titleList:
-                if title.find(pattern)>=0:
+                if title.lower().find(pattern)>=0:
                     self.indexList+=[count]
                 count+=1
             self.update_video_list()        

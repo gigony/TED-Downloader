@@ -21,7 +21,7 @@ Download
 
 ### [Click here to download latest version](https://github.com/gigony/TED-Downloader/raw/master/releaseFiles/TEDDownloader_ver2.3.zip)
 
-Current release is **v2.2**. See the [changelog]
+Current release is **v2.3**. See the [changelog]
 
 
 
