@@ -1,7 +1,15 @@
 CHANGE LOG
 ==========
 
-Current release 2.2
+Current release 2.3
+
+2.3
+---
+
+*	Load the video list from the file(' titleList-address.txt').
+*   Added a refreshing video list feature.
+*   Added a find button
+*   Log file is saved in '/VIDEO/log.txt'
 
 2.2
 ---

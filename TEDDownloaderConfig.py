@@ -3,6 +3,8 @@ from Tkinter import *
 import ConfigParser
 import codecs
 import locale
+import os
+
 locale.setlocale(locale.LC_ALL, '')
 
 
@@ -236,6 +238,12 @@ class App:
             count += 1
         if not found:
             self.listbox.selection_set(0)
+        
+        #delete title-list file
+        titleAddressFile = './VIDEO/'+'titleList-address.txt'
+        if os.access(titleAddressFile,os.F_OK):
+            os.remove(titleAddressFile)
+        
     def getLanguageList(self):
         global langfileTextTemplate
         result = []
