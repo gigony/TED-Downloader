@@ -15,6 +15,9 @@ import socket
 import glob
 from urllib import *
 from Tkinter import *
+import Queue
+import threading,thread
+import functools
 
 class myURLOpener(urllib.FancyURLopener):
     """Create sub-class in order to overide error 206.  This error means a
@@ -85,7 +88,7 @@ def getTEDSubtitlesByTalkID ( talkId , language ) :
 
     
 def getTranslationList(language):
-    global encoding
+    global encoding,stopRetriveList
 
     resultList=[]
     titleList=[]
@@ -119,8 +122,13 @@ def getTranslationList(language):
               href=a['href']
               resultList+=['http://www.ted.com'+href]
               titleList+=[postInfo+"|"+title]
-            pageIndex=pageIndex+1            
+            pageIndex=pageIndex+1
+            
+            if stopRetriveList: # if canceled
+                return ([],[])
+                        
             print ".",
+    
         except Exception,msg:
             print 't',
             time.sleep(0.1)         
@@ -130,10 +138,10 @@ def getTranslationList(language):
     addFile = open ( './VIDEO/'+'titleList-address.txt' , 'w' )
     for i in range(len(titleList)):
     #for element in titleList:
-        txtFile.write( titleList[i].encode ( encoding,'xmlcharrefreplace') )        
+        txtFile.write( titleList[i].encode ( encoding,'xmlcharrefreplace').strip() )        
         txtFile.write(os.linesep)
-        addFile.write( titleList[i].encode ( encoding,'xmlcharrefreplace') )        
-        addFile.write("\t|"+resultList[i])
+        addFile.write( titleList[i].encode ( encoding,'xmlcharrefreplace').strip() )        
+        addFile.write("\t|"+resultList[i].strip())
         addFile.write(os.linesep)
     txtFile.close()
     addFile.close()
@@ -217,9 +225,10 @@ def isExistTEDFile(address,fileList):
     
     
 def initProgram():
+    global stopRetriveList
     socket.setdefaulttimeout(300)
     print '##########################################################'
-    print '## TED Video & Subtitle Downloader Ver 2.2 (2012-10-25) ##'
+    print '## TED Video & Subtitle Downloader Ver 2.3 (2012-11-04) ##'
     print '##                                                      ##'
     print '##                                       made by gigony ##'
     print '##                            http://gigony.tistory.com ##'    
@@ -238,6 +247,8 @@ def initProgram():
     # make VIDEO folder
     if not os.path.exists("./VIDEO/"):
         os.makedirs("./VIDEO/")
+    
+    stopRetriveList=False
     return True
 
         
@@ -262,16 +273,15 @@ class App:
     def download(self):
         global tedList
         tedList=[]
-        print '==   List   =='
+        print '==   List   =='        
         for item in self.listbox:
-            tedList+=[(self.titleList[item],self.tedAddressList[item])]
+            tedList+=[(self.titleList[self.item],self.tedAddressList[item])]
             print self.tedAddressList[item]
         print		
         
 class GUIApp:
     def __init__(self,master):
-        global qualityValue,tedLangID,videoQuality,downAudio,isDownAudio
-        print 'Loading the talk list',
+        global qualityValue,tedLangID,videoQuality,downAudio,isDownAudio        
         self.root=master
         qualityValue=IntVar()
         isDownAudio=IntVar()
@@ -279,6 +289,9 @@ class GUIApp:
         
         self.button=Button(master,text='Download',command=self.download)
         self.button.pack(side=BOTTOM)
+        
+        self.refreshBtn=Button(master,text='Refresh List',command=self.refresh_list)        
+        self.refreshBtn.pack(side=BOTTOM)        
         
         self.downAudioBtn=Checkbutton(master,text='Download Audio',variable=isDownAudio)
         self.downAudioBtn.pack(side=BOTTOM)
@@ -295,22 +308,109 @@ class GUIApp:
         self.listbox=Listbox(master,yscrollcommand=scrollbar.set,selectmode=EXTENDED)    
         scrollbar.config(command=self.listbox.yview)        
         scrollbar.pack(side=RIGHT,fill=Y)                
-        self.listbox.pack(side=LEFT,fill=BOTH,expand=1)
+        self.listbox.pack(side=BOTTOM,fill=BOTH,expand=1)
+        
+        Label(master,text='Text to find:').pack(side=LEFT)
+        self.edit = Entry(master)
+        self.edit.pack(side=LEFT, fill=BOTH, expand=1)
+        self.edit.focus_set()
+        self.edit.bind('<Return>', self.on_enterkey)
+        butt = Button(master, text='Find')
+        butt.pack(side=RIGHT)
+        butt.config(command=self.find_btn)
+        
+        self.queue=None
+        self.isRefreshing=False
+        self.titleList=[]
+        self.resultList=[]
+        self.fileList=[]        
+        
+        self.load_video_list()
+    def find_btn(self):
+        pattern=self.edit.get()
+        
+        if pattern=='':
+            self.indexList=range(len(self.titleList))
+            self.update_video_list()
+        else:
+            self.fileList=getTEDFileList()
+            self.indexList=[]
+            count=0
+            for title in self.titleList:
+                if title.find(pattern)>=0:
+                    self.indexList+=[count]
+                count+=1
+            self.update_video_list()        
+    def on_enterkey(self,key):
+        self.find_btn()           
+
+    def load_video_list(self):        
+        if os.access('./VIDEO/'+'titleList-address.txt',os.F_OK):
+            print 'Loading the talk list...',
+            addFile = open ( './VIDEO/'+'titleList-address.txt' , 'r' )
+            lines=addFile.readlines()
+            resultList=[]
+            titleList=[]
+            for line in lines:            
+                item=line.split("\t|")
+                if len(item)==2:
+                    titleList+=[item[0].decode(encoding)]
+                    resultList+=[item[1].decode(encoding)]                   
                     
-        self.tedAddressList,self.titleList=getTranslationList(tedLangID)
-        fileList=getTEDFileList()
-        count=0
-        for title in self.titleList:
-            self.listbox.insert(END,title)            
-            if isExistTEDFile(self.tedAddressList[count],fileList):                
+            addFile.close()            
+            self.tedAddressList,self.titleList=(resultList,titleList)
+            self.indexList=range(len(titleList))
+            self.update_video_list()
+        else:
+            self.refresh_list()
+        
+    def check_me(self):
+        try:
+            while True:
+                isOK= self.queue.get_nowait()
+                self.queue=None                 
+                if isOK:                    
+                    self.indexList=range(len(self.titleList))
+                    self.update_video_list()
+                    
+                self.isRefreshing=False
+                return
+        except Queue.Empty:
+            pass        
+        self.root.after(1000, self.check_me)
+        
+    def refresh_list(self):
+        if self.isRefreshing:
+            return        
+        print 'Loading the talk list...',
+        self.isRefreshing=True
+        self.queue = Queue.Queue()
+        self.check_me()
+        thread.start_new_thread(self.get_video_list,())
+    def update_video_list(self):
+        self.fileList=getTEDFileList()
+        size=self.listbox.size()
+        self.listbox.delete(0,size-1)
+        count=0        
+        for item in self.indexList:
+            self.listbox.insert(END,self.titleList[item])            
+            if isExistTEDFile(self.tedAddressList[item],self.fileList):                
                 self.listbox.itemconfig(count,bg='white',fg='gray')
             count=count+1
-            
         print count,"^^"
         print 'Done!'
         
+    def get_video_list(self):
+        self.tedAddressList,self.titleList=getTranslationList(tedLangID)
+        self.queue.put(True)
+        
+        
     def download(self):
         global config,tedList,qualityValue,videoQuality,downAudio,isDownAudio
+        
+        if self.queue is not None:
+            self.queue.put(False)
+        
         items=self.listbox.curselection()
         videoQuality=qualityValue.get()
         if isDownAudio.get()==1:
@@ -323,8 +423,8 @@ class GUIApp:
         tedList=[]
         print '==   List   =='
         for item in items:
-            tedList+=[(self.titleList[item],self.tedAddressList[item])]
-            print self.tedAddressList[item]
+            tedList+=[(self.titleList[self.indexList[item]],self.tedAddressList[self.indexList[item]])]
+            print self.tedAddressList[self.indexList[item]]
         print
         self.root.destroy()
         config.set('Config','Quality',qualityValue.get())   
@@ -405,7 +505,13 @@ def download_file(videoURL,filename,isStopped):
         return fname
 
 def download(tedList,videoQuality):
-    global downloadCount,tedLangID,encoding,downVideo,downAudio
+    global downloadCount,tedLangID,encoding,downVideo,downAudio,stopRetriveList
+    
+    stopRetriveList=True
+    logFile = './VIDEO/'+'log.txt'
+    if os.access(logFile,os.F_OK):
+        os.remove(logFile)        
+    
     if not os.access('./VIDEO',os.F_OK):
         os.mkdir('./VIDEO')
     for tedItem in tedList:
@@ -414,10 +520,10 @@ def download(tedList,videoQuality):
         tryCount=3
         while tryCount>0 :
             try:
-                print 
+                log_print(logFile,"") 
                 filename=None
-                print tedItem[0].encode(sys.stdout.encoding,'xmlcharrefreplace')
-                print '  '+ted                
+                log_print(logFile,tedItem[0].encode(sys.stdout.encoding,'xmlcharrefreplace'))
+                log_print(logFile,'  '+ted)                
                 req = urllib2.Request(ted)
                 response = urllib2.urlopen(req)                
                 result = response.read()
@@ -429,15 +535,15 @@ def download(tedList,videoQuality):
                 # Generate file name
                 splits = ted.split ( '/' )
                 filename = ('00000'+str(talkId))[-5:]+'_'+splits[len ( splits )-1].split ('.')[0]
-                print '  '+filename
+                log_print(logFile,'  '+filename)
 
                 ## Get Talk Intro Duration value
                 splits = result.split ( "playlist:'" )
                 if len(splits)==1:
-                    print '  '+"This is a Youtube video"
+                    log_print(logFile,'  '+"This is a Youtube video")
                     splits = result.split ( '''<iframe src="''')
                     youtubeURL=splits[1].split('"')[0]
-                    print '  '+youtubeURL
+                    log_print(logFile,'  '+youtubeURL)
                     urlFile = open ( './VIDEO/'+filename + '.url' , 'w' )
                     urlFile.write ("""[InternetShortcut]\r\nURL="""+youtubeURL)
                     urlFile.close()                    
@@ -449,7 +555,7 @@ def download(tedList,videoQuality):
                 splits = result.split ( """download_dialog.load('""")
                 downloadURL='http://www.ted.com'+splits[1].split("'")[0]
                 videoName=downloadURL.split("links/slug/")[1].split("/type")[0]
-                print downloadURL
+                log_print(logFile,downloadURL)
                 req = urllib2.Request(downloadURL)
                 response = urllib2.urlopen(req)
                 result = response.read()
@@ -460,16 +566,16 @@ def download(tedList,videoQuality):
                     if len(audioResult)>1:
                         audioURL=audioResult[1].split('''">Download to desktop (MP3)</a></dt>''')[0]
                         downloadCount=-1
-                        print "  Downloading from "+audioURL
+                        log_print(logFile, "  Downloading from "+audioURL)
                         fname=download_file(audioURL,filename+'.mp3',isStopped)
-                        print
-                        print '  %s is saved' % fname
+                        log_print(logFile,'')
+                        log_print(logFile,'  %s is saved' % fname)
                     else:
-                        print '    '+'No audio file existed'
+                        log_print(logFile, '    '+'No audio file existed')
                         
                 #check mp4/smi/txt file 
                 if os.access('./VIDEO/'+filename+'.mp4',os.F_OK) and os.path.getsize('./VIDEO/'+filename+'.mp4')>0 and os.access('./VIDEO/'+filename+'.smi',os.F_OK)and os.path.getsize('./VIDEO/'+filename+'.smi')>0 and os.access('./VIDEO/'+filename+'.txt',os.F_OK)and os.path.getsize('./VIDEO/'+filename+'.txt')>0:
-                    print '    '+filename+'.mp4/smi/txt is already exist'
+                    log_print(logFile,'    '+filename+'.mp4/smi/txt is already exist')
                     break
 
                 ## Get Talk Video
@@ -484,12 +590,12 @@ def download(tedList,videoQuality):
                     videoURL="http://download.ted.com/talks/%s%s.mp4"%(videoName,postFixList[videoQuality])
                     
                     downloadCount=-1                
-                    print "  Downloading from "+videoURL                    
+                    log_print(logFile,"  Downloading from "+videoURL)                    
 
                     #fname,header=urlretrieve(videoURL,'./VIDEO/' + filename + '.mp4',downloadHook)
                     fname=download_file(videoURL,filename+'.mp4',isStopped)
-                    print
-                    print '  %s is saved' % fname            
+                    log_print(logFile,'')
+                    log_print(logFile,'  %s is saved' % fname)            
     
                 #download smi file
                 if not transLang=='English':
@@ -512,11 +618,17 @@ def download(tedList,videoQuality):
                     txtFile.close ()                                
                 break
             except Exception,msg:        
-                print msg
-                print 'waiting 10 seconds..'
+                log_print(logFile,msg)
+                log_print(logFile,'waiting 10 seconds..')
                 isStopped=True
                 tryCount=tryCount-1
-                time.sleep(10)
+                time.sleep(10)                
+        
+def log_print(logFile,msg):
+    print msg
+    f=open ( './VIDEO/'+'log.txt' , 'a' )
+    f.write(msg.encode(encoding,'xmlcharrefreplace') + os.linesep)
+
 
 tedList=[]
 if not initProgram():
