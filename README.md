@@ -8,7 +8,7 @@ I made a simple python GUI application, *TED Downloader*, using tcl/tk.
 *TED Downloader* can easily download videos/audios with subtitles.
 
 Screenshots
------------
+-----------------
 Click to view.
 
 [![ConsoleLog](https://github.com/gigony/TED-Downloader/raw/master/screenshots/ConsoleLog_th.png)](https://github.com/gigony/TED-Downloader/raw/master/screenshots/ConsoleLog.png)
