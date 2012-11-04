@@ -7,7 +7,7 @@ TED.COM provides subtitles made by many contributors.
 I made a simple python GUI application, *TED Downloader*, using tcl/tk that can easily download videos/audios with subtitles.
 
 Screenshots
------------
+-----------------
 Click to view.
 
 [![ConsoleLog](https://github.com/gigony/TED-Downloader/raw/master/screenshots/ConsoleLog_th.png)](https://github.com/gigony/TED-Downloader/raw/master/screenshots/ConsoleLog.png)
@@ -19,7 +19,7 @@ Click to view.
 Download
 --------
 
-### [Click here to download latest version](https://github.com/gigony/TED-Downloader/raw/master/releaseFiles/TEDDownloader_ver2.2.zip)
+### [Click here to download latest version](https://github.com/gigony/TED-Downloader/raw/master/releaseFiles/TEDDownloader_ver2.3.zip)
 
 Current release is **v2.2**. See the [changelog]
 
