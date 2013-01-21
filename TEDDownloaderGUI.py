@@ -228,7 +228,7 @@ def initProgram():
     global stopRetriveList
     socket.setdefaulttimeout(300)
     print '##########################################################'
-    print '## TED Video & Subtitle Downloader Ver 2.3 (2012-11-04) ##'
+    print '## TED Video & Subtitle Downloader Ver 2.4 (2013-01-21) ##'
     print '##                                                      ##'
     print '##                                       made by gigony ##'
     print '##                            http://gigony.tistory.com ##'    
@@ -550,10 +550,12 @@ def download(tedList,videoQuality):
                 # Generate file name
                 splits = ted.split ( '/' )
                 filename = ('00000'+str(talkId))[-5:]+'_'+splits[len ( splits )-1].split ('.')[0]
-                log_print(logFile,'  '+filename)
+                log_print(logFile,'  '+filename)                
 
                 ## Get Talk Intro Duration value
-                splits = result.split ( "playlist:'" )
+
+                splits = result.split ('''<a id="no-flash-video-download" href="http://download.ted.com/talks/''')
+                
                 if len(splits)==1:
                     log_print(logFile,'  '+"This is a Youtube video")
                     splits = result.split ( '''<iframe src="''')
@@ -563,14 +565,14 @@ def download(tedList,videoQuality):
                     urlFile.write ("""[InternetShortcut]\r\nURL="""+youtubeURL)
                     urlFile.close()                    
                     break
-                talkIntroDuration = splits[1].split ( "'" )[0]
+
+                videoName = splits[1].split(".")[0]
+                talkIntroDuration = splits[1].split ( "</script>" )[0]
                 talkIntroDuration = unquote(talkIntroDuration)
                 talkIntroDuration = talkIntroDuration.split('''"introDuration":''')[1].split(",")[0]
-                talkIntroDuration = int ( talkIntroDuration )*1000
-                splits = result.split ( """download_dialog.load('""")
-                downloadURL='http://www.ted.com'+splits[1].split("'")[0]
-                videoName=downloadURL.split("links/slug/")[1].split("/type")[0]
-                log_print(logFile,downloadURL)
+                talkIntroDuration = int ( talkIntroDuration )*1000                
+                
+                downloadURL='http://www.ted.com/download/links/slug/%s/type/talks/ext/mp4'%(videoName)                                
                 req = urllib2.Request(downloadURL)
                 response = urllib2.urlopen(req)
                 result = response.read()
@@ -602,7 +604,7 @@ def download(tedList,videoQuality):
                         postFixList=postFixList+[downloadSplits[i].split(''' value="''')[1].split('"')[0]]
                     if videoQuality>=numOfDownloadLink:
                         videoQuality=numOfDownloadLink-1
-                    videoURL="http://download.ted.com/talks/%s%s.mp4"%(videoName,postFixList[videoQuality])
+                    videoURL="http://download.ted.com/talks/%s%s.mp4?apikey=TEDDOWNLOAD"%(videoName,postFixList[videoQuality])
                     
                     downloadCount=-1                
                     log_print(logFile,"  Downloading from "+videoURL)                    
