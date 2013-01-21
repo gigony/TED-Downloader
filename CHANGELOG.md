@@ -4,7 +4,7 @@ CHANGE LOG
 Current release 2.4
 
 
-2.4
+2.4 (2013-01-21)
 ---
 * Fixed download errors.
 
