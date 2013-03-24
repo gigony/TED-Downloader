@@ -19,9 +19,9 @@ Click to view.
 Download
 --------
 
-### [Click here to download latest version](http://goo.gl/Gb9P2)
+### [Click here to download latest version](http://goo.gl/dEVSV)
 
-Current release is **v2.3.1**. See the [changelog]
+Current release is **v2.4.1**(2013-03-24). See the [changelog]
 
 
 
