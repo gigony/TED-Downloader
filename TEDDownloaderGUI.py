@@ -228,7 +228,7 @@ def initProgram():
     global stopRetriveList
     socket.setdefaulttimeout(300)
     print '##########################################################'
-    print '## TED Video & Subtitle Downloader Ver 2.4 (2013-01-21) ##'
+    print '## TED Video & Subtitle Downloader Ver 2.4.1(2013-03-24)##'
     print '##                                                      ##'
     print '##                                       made by gigony ##'
     print '##                            http://gigony.tistory.com ##'    
@@ -568,9 +568,9 @@ def download(tedList,videoQuality):
 
                 videoName = splits[1].split(".")[0]
                 talkIntroDuration = splits[1].split ( "</script>" )[0]
-                talkIntroDuration = unquote(talkIntroDuration)
-                talkIntroDuration = talkIntroDuration.split('''"introDuration":''')[1].split(",")[0]
-                talkIntroDuration = int ( talkIntroDuration )*1000                
+                talkIntroDuration = unquote(talkIntroDuration)                
+                talkIntroDuration = talkIntroDuration.split('''"introDuration":''')[1].split(",")[0]                
+                talkIntroDuration = int(float ( talkIntroDuration )*1000)                
                 
                 downloadURL='http://www.ted.com/download/links/slug/%s/type/talks/ext/mp4'%(videoName)                                
                 req = urllib2.Request(downloadURL)

@@ -1,8 +1,12 @@
 CHANGE LOG
 ==========
 
-Current release 2.4
+Current release 2.4.1
 
+
+2.4.1 (2013-03-24)
+---
+* Fixed a download error.
 
 2.4
 ---
