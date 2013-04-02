@@ -1,7 +1,7 @@
-TED Downloader
+TED Talks Downloader
 ==============
 
-I found that [TED](http://www.ted.com) videos are useful for learning English because 
+I found that [TED](http://www.ted.com) talks are useful for learning English because 
 TED.COM provides subtitles made by many contributors.
 
 I made a simple python GUI application, *TED Downloader*, using tcl/tk that can easily download videos/audios with subtitles.
