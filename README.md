@@ -1,6 +1,8 @@
 TED Downloader
 ==============
 
+ ##### NOTE: This project is deprecated #####
+
 I found that [TED](http://www.ted.com) videos are useful for learning English because 
 TED.COM provides subtitles made by many contributors.
 
